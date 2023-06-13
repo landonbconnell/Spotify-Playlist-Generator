@@ -1,0 +1,38 @@
+.spotify-app {
+    text-align: center;
+    background-color: #121212; /* Spotify dark background */
+    color: white; /* White text on dark background */
+    font-family: 'Circular', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; /* Spotify uses the Circular font, but fall back to Helvetica or Arial if it's not available */
+    height: 100vh;
+}
+
+.spotify-header {
+    background-color: #1DB954; /* Spotify green */
+    min-height: 60px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(10px + 2vmin);
+}
+
+.spotify-main {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 20px;
+}
+
+.spotify-section {
+    margin-right: 30px;
+}
+
+.spotify-window {
+    border: 1px solid #282828; /* A slightly lighter dark gray for borders */
+    padding: 20px;
+    width: 300px;
+    height: 400px;
+    overflow: auto;
+    background-color: #282828; /* A slightly lighter dark gray for the window */
+}

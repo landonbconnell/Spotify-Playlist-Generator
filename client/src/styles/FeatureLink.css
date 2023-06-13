@@ -1,0 +1,15 @@
+.spotify-feature {
+    margin-bottom: 20px;
+}
+
+.spotify-feature-link {
+    color: #FFFFFF; /* White color */
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold; /* Spotify uses bold text for emphasis */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.spotify-feature-link:hover {
+    color: #1DB954; /* Spotify green color on hover */
+}
