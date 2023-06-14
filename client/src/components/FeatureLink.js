@@ -1,12 +1,18 @@
-import React from 'react';
+import { React, useEffect } from 'react';
+import axios from 'axios'
 import '../styles/FeatureLink.css';
 
-const FeatureLink = ({ featureName, link }) => {
+const FeatureLink = ({ featureName, code }) => {
+
+    useEffect(() => {
+        
+    }, [])
+
     return (
         <div className="spotify-feature">
-            <a href={link} className="spotify-feature-link">
+            <div className="spotify-feature-link">
                 {featureName}
-            </a>
+            </div>
         </div>
     );
 };

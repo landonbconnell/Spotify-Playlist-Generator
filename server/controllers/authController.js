@@ -1,4 +1,6 @@
 const querystring = require('querystring');
+const axios = require('axios')
+const config = require('../config')
 
 // Your application's client ID and redirect URI
 const client_id = 'be4c953fbc71461a85c3dbe065a32fb4';
@@ -16,24 +18,29 @@ const authRequest = ((req, res) => {
     }));
 })
 
-const getAccessToken = (async (req, res) => {
-    try {
-        const response = await axios.post('https://accounts.spotify.com/api/token', {
+const getAccessToken = async (req, res) => {
+  try {
+      const response = await axios.post('https://accounts.spotify.com/api/token', 
+        querystring.stringify({
           grant_type: 'authorization_code',
           code: req.params.code,
           redirect_uri,
           client_id,
           client_secret
-        }, {
+        }), 
+        {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           }
-        });
-    
-        return response.data.access_token
-    } catch (error) {
-        return error
-    }
-})
+        }
+      );
+  
+      res.json(response.data);  // send response to client
+      config.accessToken = response.data.access_token
+  } catch (error) {
+      console.error(error);  // log error for debugging
+      res.status(500).json({ error: error.toString() });  // send error to client
+  }
+};
 
 module.exports = { authRequest, getAccessToken }
