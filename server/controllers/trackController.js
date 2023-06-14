@@ -14,7 +14,13 @@ const getSavedTracks = async (req, res) => {
         });
   
         for (let item of response.data.items) {
-          tracks.push(`${item.track.name} - ${item.track.artists[0].name}`);
+          tracks.push({
+            name: item.track.name,
+            artist: item.track.artists[0].name,
+            release_date: item.track.album.release_date,
+            genres: item.track.album.genres,
+            id: item.track.id
+          });
         }
   
         url = response.data.next;
@@ -24,7 +30,7 @@ const getSavedTracks = async (req, res) => {
       }
     }
   
-    res.send(tracks);
+    res.json(tracks);
   };
   
   module.exports = getSavedTracks;

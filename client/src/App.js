@@ -11,9 +11,9 @@ const App = () => (
     <Routes>
       <Route path='/' element={<LogInPage />}/>
       <Route path='/home' element={<HomePage />}/>
-      <Route path='/create_playlist' element={<CreatePlaylist />}/>
-      <Route path='/modify_playlist' element={<ModifyPlaylist />}/>
-      <Route path='/organize_liked_songs' element={<OrganizeLikedSongs />}/>
+      <Route path='/home/create_playlist' element={<CreatePlaylist />}/>
+      <Route path='/home/modify_playlist' element={<ModifyPlaylist />}/>
+      <Route path='/home/organize_liked_songs' element={<OrganizeLikedSongs />}/>
     </Routes>
 )
 
