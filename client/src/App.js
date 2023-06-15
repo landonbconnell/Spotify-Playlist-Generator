@@ -6,8 +6,11 @@ import HomePage from "./pages/HomePage"
 import CreatePlaylist from './features/CreatePlaylist'
 import ModifyPlaylist from './features/ModifyPlaylist'
 import OrganizeLikedSongs from './features/OrganizeLikedSongs'
+import { CssBaseline } from '@mui/material'
 
 const App = () => (
+  <>
+    <CssBaseline />
     <Routes>
       <Route path='/' element={<LogInPage />}/>
       <Route path='/home' element={<HomePage />}/>
@@ -15,6 +18,7 @@ const App = () => (
       <Route path='/home/modify_playlist' element={<ModifyPlaylist />}/>
       <Route path='/home/organize_liked_songs' element={<OrganizeLikedSongs />}/>
     </Routes>
+  </> 
 )
 
 
