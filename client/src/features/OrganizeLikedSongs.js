@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { CircularProgress, Typography, Box, List, ListItem, ListItemText, Checkbox, FormControlLabel, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { Button } from '@mui/material';
 
 const FetchTracks = (setTracks, setLoading) => {
     useEffect(() => {
@@ -15,6 +16,17 @@ const FetchTracks = (setTracks, setLoading) => {
                 setLoading(false);
             })
     }, []) // only run this hook once, when the component first loads
+}
+
+// Function to fetch playlist names and descriptions
+const fetchPlaylistNamesAndDescriptions = (setPlaylists) => {
+    axios.get('http://localhost:5000/playlists/getNamesAndDescriptions')
+        .then(response => {
+            setPlaylists(response.data);
+        })
+        .catch(error => {
+            console.log(error);
+        });
 }
 
 const LoadingComponent = () => (
@@ -83,7 +95,7 @@ const SelectAll = ({ selectAll, handleSelectAll }) => (
     />
 );
 
-const GeneratePlaylistBox = ({ playlists, onDelete }) => (
+const GeneratePlaylistBox = ({ playlists, setPlaylists, onDelete }) => (
     <Box
         display="flex"
         flexDirection="column"
@@ -93,7 +105,7 @@ const GeneratePlaylistBox = ({ playlists, onDelete }) => (
             maxHeight: '80vh',
             overflow: 'auto',
             width: '100%',
-            maxWidth: '800px', // increased max-width
+            maxWidth: '800px',
             backgroundColor: '#282828',
             padding: '0 15px 0 15px',
             borderRadius: '0 0 0 10px',
@@ -101,7 +113,14 @@ const GeneratePlaylistBox = ({ playlists, onDelete }) => (
             marginRight: '40px'
         }}
     >
-        <button style={{ color: 'white', backgroundColor: '#1DB954', padding: '10px 20px', borderRadius: '5px', border: 'none' }}>Generate Playlist Names</button>
+        <Button
+            variant="contained"
+            color="primary"
+            style={{ marginBottom: '10px' }} // Add some spacing
+            onClick={() => fetchPlaylistNamesAndDescriptions(setPlaylists)}
+        >
+            Generate Playlist Names
+        </Button>
         {playlists.map((playlist) => (
             <PlaylistNameAndDescription 
                 key={playlist.id}
@@ -112,6 +131,7 @@ const GeneratePlaylistBox = ({ playlists, onDelete }) => (
         ))}
     </Box>
 );
+
 
 const PlaylistBox = () => (
     <Box
@@ -138,6 +158,11 @@ const PlaylistNameAndDescription = ({ playlistName, playlistDescription, onDelet
     const [name, setName] = useState(playlistName);
     const [description, setDescription] = useState(playlistDescription);
   
+    useEffect(() => {
+        setName(playlistName);
+        setDescription(playlistDescription);
+    }, [playlistName, playlistDescription]);
+
     return (
         <Box
             display="flex"
@@ -146,10 +171,10 @@ const PlaylistNameAndDescription = ({ playlistName, playlistDescription, onDelet
             alignItems="flex-start"
             position="relative"
             padding="15px"
-            margin="0 0 15px 0" // Removed horizontal margins
+            margin="0 0 15px 0"
             bgcolor="#3f3f3f"
             borderRadius="5px"
-            width="100%" // Full width of the parent
+            width="100%"
         >
             <IconButton
                 aria-label="delete"
@@ -181,13 +206,15 @@ const OrganizeLikedSongs = () => {
     const [loading, setLoading] = useState(true);
     const [selectedTracks, setSelectedTracks] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
-    const [playlists, setPlaylists] = useState([
-        { id: 1, name: "Sample Playlist 1", description: "This is a sample playlist 1." },
-        { id: 2, name: "Sample Playlist 2", description: "This is a sample playlist 2." }
-    ]);
+    const [playlists, setPlaylists] = useState([]);
     
 
     FetchTracks(setTracks, setLoading);
+
+    // Use effect for fetching playlist names and descriptions
+    useEffect(() => {
+        fetchPlaylistNamesAndDescriptions(setPlaylists);
+    }, [setPlaylists]);
 
     const handleCheck = (track) => {
         if (selectedTracks.find((selectedTrack) => selectedTrack.id === track.id)) {
@@ -263,7 +290,7 @@ const OrganizeLikedSongs = () => {
                     </Box>
                     <TrackList tracks={tracks} selectedTracks={selectedTracks} handleCheck={handleCheck} />
                   </Box>
-                  <GeneratePlaylistBox playlists={playlists} onDelete={handleDeletePlaylist} />
+                  <GeneratePlaylistBox playlists={playlists} setPlaylists={setPlaylists} onDelete={handleDeletePlaylist} />
                   <PlaylistBox />
                 </Box>
               }

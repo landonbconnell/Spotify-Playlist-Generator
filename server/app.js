@@ -4,6 +4,7 @@ const cors = require('cors')
 const userRouter = require('./routers/userRouter.js')
 const trackRouter = require('./routers/trackRouter.js')
 const authRouter = require('./routers/authRouter.js')
+const playlistRouter = require('./routers/playlistRouter.js')
 
 // Create a new express application
 const app = express();
@@ -22,3 +23,4 @@ app.use(cors({
 app.use('/users', userRouter)
 app.use('/tracks', trackRouter)
 app.use('/auth', authRouter)
+app.use('/playlists', playlistRouter)
