@@ -1,35 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { CircularProgress, Typography, Box, List, ListItem, ListItemText, Checkbox, FormControlLabel, IconButton, Button } from '@mui/material';
+import { CircularProgress, Typography, Box, List, ListItem, ListItemText, Checkbox, FormControlLabel, IconButton, Button, Container, Grid } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
-const FetchTracks = (setTracks, setLoading) => {
-    useEffect(() => {
-        axios.get('http://localhost:5000/tracks/saved')
-            .then(response => {
-                setTracks(response.data);
-                setLoading(false);
-            })
-            .catch(error => {
-                console.log(error);
-                setLoading(false);
-            })
-    }, []) // only run this hook once, when the component first loads
-}
-
 // Function to fetch playlist names and descriptions
-const fetchPlaylistNamesAndDescriptions = (setPlaylists) => {
+const fetchPlaylistNamesAndDescriptions = (setPlaylistIdeas) => {
     return axios.get('http://localhost:5000/playlists/getNamesAndDescriptions')
         .then(response => {
-            setPlaylists(response.data);
+            setPlaylistIdeas(response.data.playlists);
         })
         .catch(error => {
             console.log(error);
         });
 }
-
 
 const LoadingComponent = () => (
     <Box
@@ -97,102 +82,118 @@ const SelectAll = ({ selectAll, handleSelectAll }) => (
     />
 );
 
-const GeneratePlaylistBox = ({ playlists, setPlaylists, onDelete }) => {
+const GeneratePlaylistIdeasBox = ({ playlists, setPlaylistIdeas, onDelete }) => {
     const [keywords, setKeywords] = useState('');
     const [loading, setLoading] = useState(false);
-
-    console.log(playlists)
+    const [currentId, setCurrentId] = useState(0);
 
     const handleGeneratePlaylistNames = () => {
-        setLoading(true); // Start loading
-        fetchPlaylistNamesAndDescriptions(setPlaylists).finally(() => setLoading(false)); // End loading after fetching
+        setLoading(true);
+        fetchPlaylistNamesAndDescriptions(setPlaylistIdeas).finally(() => setLoading(false));
+    }
+
+    const handleGeneratePlaylistByKeywords = () => {
+        setLoading(true);
+        axios.get(`http://localhost:5000/playlists/getNameAndDescriptionByKeyword/${keywords}`)
+            .then(response => {
+                setPlaylistIdeas(playlists.concat(response.data));
+                setLoading(false);
+            })
+            .catch(error => {
+                console.log(error);
+                setLoading(false);
+            })
+
+        setKeywords('')
     }
 
     return (
-    
-    <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="start"
-        alignItems="start"
-        style={{
-            maxHeight: '80vh',
-            overflow: 'auto',
-            width: '100%',
-            maxWidth: '800px',
-            backgroundColor: '#282828',
-            padding: '15px 15px 15px 15px',
-            borderRadius: '0 10px 0 10px',
-            marginLeft: '60px',
-            marginRight: '60px'
-        }}
-    >
-        <Box style={{ width: '100%', borderBottom: '1px solid gray', paddingBottom: '20px' }}>
-            <Typography variant="h5" style={{ color: 'white', padding: '10px 0 0 15px' }}>Playlist Idea Generation</Typography>
-        </Box>
-        <Box
-            display="flex"
-            flexDirection="column"
+        <Container
+            direction="column"
+            justifyContent="space-evenly"
             alignItems="center"
-            justifyContent="center" // center items along the main axis
-            style={{
-                overflow: 'auto',
-                flex: '1 1 auto',
-                width: '100%',
-                paddingTop: '15px'
+            maxWidth="sm"
+            sx={{
+                maxHeight: '80vh',
+                bgcolor: '#282828',
+                p: 2,
+                borderRadius: '0 10px 0 10px',
+                m: '0 auto',
+                position: 'relative',
+                overflow: 'hidden'
             }}
         >
-            { (playlists.length === 0 && loading) &&
-                <>
-                    <CircularProgress sx={{ color: '#1DB954' }} />
-                    <Typography variant="h6" style={{ marginTop: '20px' }}>Generating Playlist Ideas...</Typography>
-                    <Typography variant="p">This may take a minute</Typography>
-                </>
-            }  
+            <Grid container direction="column" justifyContent="center" alignItems="center">
+                <Grid item xs={12} sx={{ borderBottom: '1px solid gray', pb: 2 }}>
+                    <Typography variant="h5" sx={{ color: 'white', pt: 1, pl: 2 }}>Playlist Idea Generation</Typography>
+                </Grid>
 
-            { (playlists.length === 0 && !loading) &&
-                <Button
-                    variant="contained"
-                    color="primary"
-                    style={{ marginBottom: '10px', backgroundColor: '#1DB954' }} // Add some spacing
-                    onClick={handleGeneratePlaylistNames}
-                    disabled={loading} // disable the button when loading
+                <Grid item xs={12} 
+                    sx={{
+                        maxHeight: '700px',
+                        overflowY: 'auto',
+                        width: '100%',
+                        pt: 2
+                    }}
                 >
-                    Generate Playlist Ideas
-                </Button>
-            }
 
-            {playlists.map((playlist) => (
-                <PlaylistNameAndDescription 
-                    key={playlist.id}
-                    playlistName={playlist.name} 
-                    playlistDescription={playlist.description} 
-                    onDelete={() => onDelete(playlist.id)}
-                />
-            ))}
-        </Box>
+                { (playlists.length === 0 && loading) &&
+                    <Grid container direction="column" justifyContent="center" alignItems="center" style={{ minHeight: '100%' }}>
+                        <CircularProgress sx={{ color: '#1DB954' }} />
+                        <Typography variant="h6" style={{ marginTop: '20px' }}>Generating Playlist Ideas...</Typography>
+                        <Typography variant="p">This may take a minute</Typography>
+                    </Grid>
+                }  
 
-        {playlists.length !== 0 &&
-            <Box 
-                display="flex"
-                flexDirection="row"
-                justifyContent="center"
-                alignItems="center"
-                style={{ marginTop: '10px', position: 'sticky', bottom: 0, background: '#282828', padding: '20px' }} 
+                { (playlists.length === 0 && !loading) &&
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        style={{ marginBottom: '10px', backgroundColor: '#1DB954' }} 
+                        onClick={handleGeneratePlaylistNames}
+                        disabled={loading} 
+                    >
+                        Generate Playlist Ideas
+                    </Button>
+                }
+
+                {playlists.map((playlist) => (
+                    <PlaylistNameAndDescription 
+                        key={playlist.id}
+                        playlistName={playlist.playlist_name} 
+                        playlistDescription={playlist.playlist_description} 
+                        onDelete={() => onDelete(playlist.id)}
+                    />
+                ))}
+            </Grid>
+
+            {playlists.length !== 0 &&
+                <Grid item xs={12}
+                sx={{ 
+                    mt: 1, 
+                    position: 'sticky', 
+                    bottom: 0, 
+                    bgcolor: '#282828', 
+                    p: 2,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }} 
             >
                 <input 
                     type="text"
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
                     placeholder="keyword(s)"
-                    style={{ marginRight: '10px', width: '300px', height: '100%', borderRadius: '5px' }} // Add some spacing
+                    style={{ marginRight: '10px', width: '300px', height: '36px', borderRadius: '5px' }} 
                 />
 
                 <Button
                     variant="contained"
                     color="primary"
                     style={{ backgroundColor: '#1DB954', marginRight: '10px' }}
-                    onClick={() => { /* Handle add keyword function here */ }}
+                    onClick={handleGeneratePlaylistByKeywords}
+                    disabled={loading}
                 >
                     <AddIcon />
                 </Button>
@@ -201,36 +202,21 @@ const GeneratePlaylistBox = ({ playlists, setPlaylists, onDelete }) => {
                     variant="contained"
                     color="primary"
                     style={{ backgroundColor: '#1DB954' }}
-                    onClick={() => { /* Handle redo function here */ }}
+                    onClick={() => { 
+                        setPlaylistIdeas([])
+                        setLoading(true)
+                        handleGeneratePlaylistNames()
+                    }}
                 >
                     <RefreshIcon />
                 </Button>
-            </Box>
+            </Grid>
         }
-        </Box>
-    )
+    </Grid>
+</Container>
+);
 }
 
-
-
-const PlaylistBox = () => (
-    <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="space-between"
-        style={{
-            maxHeight: '80vh',
-            overflow: 'auto',
-            width: '100%',
-            maxWidth: '800px', // increased max-width
-            backgroundColor: '#282828',
-            paddingLeft: '15px',
-            borderRadius: '0 0 0 10px'
-        }}
-    >
-        <Typography variant="h5" style={{ color: 'white', padding: '15px 0', borderBottom: '1px solid gray' }}>Playlists</Typography>
-    </Box>
-);
 
 const PlaylistNameAndDescription = ({ playlistName, playlistDescription, onDelete }) => {
     const [name, setName] = useState(playlistName);
@@ -270,13 +256,37 @@ const PlaylistNameAndDescription = ({ playlistName, playlistDescription, onDelet
             <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                style={{ color: 'white', fontSize: '1rem', width: '100%', backgroundColor: 'transparent', border: 'none' }}
+                style={{
+                    color: 'white', 
+                    fontSize: '1rem', 
+                    width: '100%', 
+                    backgroundColor: 'transparent', 
+                    border: 'none',
+                    resize: 'vertical'
+                }}
             />
         </Box>
     );
 };
 
-
+const PlaylistBox = () => (
+    <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="space-between"
+        style={{
+            maxHeight: '80vh',
+            overflow: 'auto',
+            width: '100%',
+            maxWidth: '800px', // increased max-width
+            backgroundColor: '#282828',
+            paddingLeft: '15px',
+            borderRadius: '0 0 0 10px'
+        }}
+    >
+        <Typography variant="h5" style={{ color: 'white', padding: '15px 0', borderBottom: '1px solid gray' }}>Playlists</Typography>
+    </Box>
+);
 
 // Main Component
 const OrganizeLikedSongs = () => {
@@ -284,30 +294,44 @@ const OrganizeLikedSongs = () => {
     const [loading, setLoading] = useState(true);
     const [selectedTracks, setSelectedTracks] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
-    const [playlists, setPlaylists] = useState([]);
+    const [playlists, setPlaylistIdeas] = useState([]);
 
-    FetchTracks(setTracks, setLoading);
+    // Fetch tracks function
+    useEffect(() => {
+        axios.get('http://localhost:5000/tracks/saved')
+            .then(response => {
+                setTracks(response.data);
+                setLoading(false);
+                if(selectAll){
+                    setSelectedTracks(response.data);
+                }
+            })
+            .catch(error => {
+                console.log(error);
+                setLoading(false);
+            });
+    }, [selectAll]); // depend on selectAll
 
-    const handleCheck = (track) => {
+    const handleCheck = useCallback((track) => {
         if (selectedTracks.find((selectedTrack) => selectedTrack.id === track.id)) {
             setSelectedTracks(selectedTracks.filter((selectedTrack) => selectedTrack.id !== track.id));
         } else {
             setSelectedTracks([...selectedTracks, track]);
         }
-    };
+    }, [selectedTracks]);
 
-    const handleSelectAll = () => {
+    const handleSelectAll = useCallback(() => {
         setSelectAll(!selectAll);
-        if(!selectAll){
-            setSelectedTracks(tracks);
-        }else{
-            setSelectedTracks([]);
-        }
-    }
+    }, [selectAll]);
 
-    const handleDeletePlaylist = (id) => {
-        setPlaylists(playlists.filter((playlist) => playlist.id !== id));
-    };    
+    const handleDeletePlaylist = useCallback((id) => {
+        setPlaylistIdeas(playlists.filter((playlist) => playlist.id !== id));
+    }, [playlists]);
+
+    const handleGeneratePlaylistNames = useCallback(() => {
+        setLoading(true);
+        fetchPlaylistNamesAndDescriptions(setPlaylistIdeas).finally(() => setLoading(false));
+    }, []);
 
     return (
         <Box
@@ -362,7 +386,7 @@ const OrganizeLikedSongs = () => {
                     </Box>
                     <TrackList tracks={tracks} selectedTracks={selectedTracks} handleCheck={handleCheck} />
                   </Box>
-                  <GeneratePlaylistBox playlists={playlists} setPlaylists={setPlaylists} onDelete={handleDeletePlaylist} />
+                  <GeneratePlaylistIdeasBox playlists={playlists} setPlaylistIdeas={setPlaylistIdeas} onDelete={handleDeletePlaylist} />
                   <PlaylistBox />
                 </Box>
               }
