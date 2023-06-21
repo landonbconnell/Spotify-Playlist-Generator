@@ -38,7 +38,7 @@ const getAccessToken = async (req, res) => {
       res.json(response.data);  // send response to client
       config.accessToken = response.data.access_token
   } catch (error) {
-      console.error(error);  // log error for debugging
+      console.error(error.response.data.error);  // log error for debugging
       res.status(500).json({ error: error.toString() });  // send error to client
   }
 };
