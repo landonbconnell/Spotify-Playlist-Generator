@@ -211,11 +211,9 @@ const generatePlaylists = async (req, res) => {
 
     // Send the sorted playlists back to the client
     res.json(JSON.parse(data));
-
-    console.log(data);
   } catch (error) {
     // Log the error and send it back to the client
-    console.error(error.request.data.error);
+    console.error(error);
     res.status(500).json({ error: error.toString() });
   }
 };

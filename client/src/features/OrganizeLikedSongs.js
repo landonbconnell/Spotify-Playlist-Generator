@@ -21,10 +21,19 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 // Function to fetch playlist names and descriptions
-const fetchPlaylistNamesAndDescriptions = (setPlaylistIdeas) => {
+const fetchPlaylistNamesAndDescriptions = (
+  setPlaylistIdeas,
+  currentId,
+  setCurrentId
+) => {
   return axios
     .get('http://localhost:5000/playlists/getNamesAndDescriptions')
     .then((response) => {
+      const playlists = response.data.playlists;
+      playlists.forEach((playlist) => {
+        playlist.id = currentId;
+        setCurrentId(currentId + 1);
+      });
       setPlaylistIdeas(response.data.playlists);
     })
     .catch((error) => {
@@ -57,7 +66,7 @@ const OrganizeLikedSongsHeader = () => (
       backgroundColor: '#1DB954',
       color: 'black',
       padding: '10px 0',
-      borderRadius: '10px 10px 0 0',
+      borderRadius: '10px',
       position: 'fixed', // Change this from 'sticky' to 'fixed'
       top: 0,
       left: '40px',
@@ -122,16 +131,19 @@ const GeneratePlaylistIdeasBox = ({
   playlistIdeas,
   setPlaylistIdeas,
   onDelete,
+  currentId,
+  setCurrentId,
 }) => {
   const [keywords, setKeywords] = useState('');
   const [loading, setLoading] = useState(false);
-  const [currentId, setCurrentId] = useState(0);
 
   const handleGeneratePlaylistNames = () => {
     setLoading(true);
-    fetchPlaylistNamesAndDescriptions(setPlaylistIdeas).finally(() =>
-      setLoading(false)
-    );
+    fetchPlaylistNamesAndDescriptions(
+      setPlaylistIdeas,
+      currentId,
+      setCurrentId
+    ).finally(() => setLoading(false));
   };
 
   const handleGeneratePlaylistByKeywords = () => {
@@ -141,7 +153,10 @@ const GeneratePlaylistIdeasBox = ({
         `http://localhost:5000/playlists/getNameAndDescriptionByKeyword/${keywords}`
       )
       .then((response) => {
-        setPlaylistIdeas(playlistIdeas.concat(response.data));
+        const newPlaylist = response.data;
+        newPlaylist.id = currentId;
+        setCurrentId(currentId + 1);
+        setPlaylistIdeas([...playlistIdeas, newPlaylist]);
         setLoading(false);
       })
       .catch((error) => {
@@ -162,7 +177,7 @@ const GeneratePlaylistIdeasBox = ({
         maxHeight: '80vh',
         bgcolor: '#282828',
         p: 2,
-        borderRadius: '0 10px 0 10px',
+        borderRadius: '10px',
         m: '0 auto',
         position: 'relative',
         overflow: 'hidden',
@@ -359,24 +374,94 @@ const PlaylistNameAndDescription = ({
   );
 };
 
-const PlaylistBox = ({ selectedTracks, playlistIdeas }) => {
+const PlaylistBox = ({
+  selectedTracks,
+  playlistIdeas,
+  currentId,
+  setCurrentId,
+}) => {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [leftoverTracks, setLeftoverTracks] = useState([]);
+  const [buttonClicked, setButtonClicked] = useState(false);
 
-  const input = {
-    playlists: playlistIdeas,
-    tracks: selectedTracks,
+  const handleClick = () => {
+    setLoading(true);
+
+    let url = 'http://localhost:5000/playlists/generatePlaylists';
+    let payloads = [];
+
+    const tracksPerAPICall = 10;
+    const numAPICalls = Math.ceil(selectedTracks.length / tracksPerAPICall);
+
+    for (let i = 0; i < numAPICalls; i++) {
+      payloads.concat({
+        playlists: playlistIdeas,
+        tracks: selectedTracks.slice(
+          tracksPerAPICall * i,
+          tracksPerAPICall * (i + 1)
+        ),
+      });
+    }
+
+    let promises = payloads.map((payload) =>
+      axios.post(url, JSON.stringify(payload))
+    );
+
+    Promise.allSettled(promises).then((results) =>
+      results.forEach((result) => console.log(result.status))
+    );
   };
 
-  const handleClick = async () => {
-    await axios
-      .post('http://localhost:5000/playlists/generatePlaylists', input)
-      .then((response) => {
-        setPlaylists(playlists.concat(response.data.playlists));
-        console.log(response.data.playlists);
-      })
-      .catch((error) => console.log(error));
+  const mergePlaylists = (playlists, sortedTracks) => {
+    return playlists.map((playlist) => {
+      let sorted = sortedTracks.find(
+        (sortedTrack) => sortedTrack.playlist_name === playlist.playlist_name
+      );
+      if (sorted) {
+        return {
+          ...playlist,
+          tracks: [...playlist.tracks, ...sorted.tracks],
+        };
+      }
+      return playlist;
+    });
   };
+
+  // const handleClick = async () => {
+  //   setLoading(true);
+
+  //   const tracksPerAPICall = 10;
+  //   const numAPICalls = Math.ceil(selectedTracks.length / tracksPerAPICall);
+  //   let i;
+
+  //   for (i = 0; i < numAPICalls; i++) {
+  //     let input = {
+  //       playlists: playlistIdeas,
+  //       tracks: selectedTracks.slice(
+  //         tracksPerAPICall * i,
+  //         tracksPerAPICall * (i + 1)
+  //       ),
+  //     };
+
+  //     await axios
+  //       .post('http://localhost:5000/playlists/generatePlaylists', input)
+  //       .then((response) => {
+  //         let sortedTracks = response.data.playlists;
+  //         if (playlists.length === 0) {
+  //           setPlaylists(sortedTracks);
+  //         } else {
+  //           let updatedPlaylists = mergePlaylists(playlists, sortedTracks);
+  //           setPlaylists(updatedPlaylists);
+  //         }
+
+  //         console.log(playlists);
+  //       })
+  //       .catch((error) => console.log(error));
+  //   }
+
+  //   setLoading(false);
+  // };
 
   return (
     <Box
@@ -390,7 +475,7 @@ const PlaylistBox = ({ selectedTracks, playlistIdeas }) => {
         maxWidth: '800px', // increased max-width
         backgroundColor: '#282828',
         paddingLeft: '15px',
-        borderRadius: '0 0 0 10px',
+        borderRadius: '10px',
       }}
     >
       <Typography
@@ -524,11 +609,7 @@ const OrganizeLikedSongs = () => {
   const [selectedTracks, setSelectedTracks] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   const [playlistIdeas, setPlaylistIdeas] = useState([]);
-
-  useEffect(() => {
-    console.log(selectedTracks);
-    console.log(playlistIdeas);
-  }, [selectedTracks, playlistIdeas]);
+  const [currentId, setCurrentId] = useState(0);
 
   // Fetch tracks function
   useEffect(() => {
@@ -537,15 +618,22 @@ const OrganizeLikedSongs = () => {
       .then((response) => {
         setTracks(response.data);
         setLoading(false);
-        if (selectAll) {
-          setSelectedTracks(response.data);
-        }
       })
       .catch((error) => {
         console.log(error);
         setLoading(false);
       });
-  }, [selectAll]); // depend on selectAll
+  }, []);
+
+  useEffect(() => {
+    if (selectAll) {
+      setSelectedTracks(tracks);
+    }
+  }, [tracks]);
+
+  useEffect(() => {
+    selectAll ? setSelectedTracks(tracks) : setSelectedTracks([]);
+  }, [setSelectedTracks, tracks]);
 
   const handleCheck = useCallback(
     (track) => {
@@ -613,7 +701,7 @@ const OrganizeLikedSongs = () => {
                 maxWidth: '600px',
                 backgroundColor: '#282828',
                 paddingLeft: '15px',
-                borderRadius: '0 0 0 10px',
+                borderRadius: '10px',
               }}
             >
               <Box
@@ -627,7 +715,7 @@ const OrganizeLikedSongs = () => {
                 zIndex={1}
                 style={{
                   padding: '15px 27px 10px 15px',
-                  borderRadius: '10px 10px 0 0',
+                  //borderRadius: '10px',
                   backgroundColor: '#282828',
                   borderBottom: '1px solid gray',
                   marginBottom: '0px',
@@ -651,10 +739,14 @@ const OrganizeLikedSongs = () => {
               playlistIdeas={playlistIdeas}
               setPlaylistIdeas={setPlaylistIdeas}
               onDelete={handleDeletePlaylist}
+              currentId={currentId}
+              setCurrentId={setCurrentId}
             />
             <PlaylistBox
               selectedTracks={selectedTracks}
               playlistIdeas={playlistIdeas}
+              currentId={currentId}
+              setCurrentId={setCurrentId}
             />
           </Box>
         )}
