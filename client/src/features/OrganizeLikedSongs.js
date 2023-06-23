@@ -391,11 +391,11 @@ const PlaylistBox = ({
     let url = 'http://localhost:5000/playlists/generatePlaylists';
     let payloads = [];
 
-    const tracksPerAPICall = 10;
+    const tracksPerAPICall = 20;
     const numAPICalls = Math.ceil(selectedTracks.length / tracksPerAPICall);
 
     for (let i = 0; i < numAPICalls; i++) {
-      payloads.concat({
+      payloads = payloads.concat({
         playlists: playlistIdeas,
         tracks: selectedTracks.slice(
           tracksPerAPICall * i,
@@ -404,14 +404,41 @@ const PlaylistBox = ({
       });
     }
 
-    let promises = payloads.map((payload) =>
-      axios.post(url, JSON.stringify(payload))
-    );
+    let promises = payloads.map((payload) => axios.post(url, payload))
+
+    let allResults = {
+      playlists: new Map(),
+      leftover_tracks: []
+    };
 
     Promise.allSettled(promises).then((results) =>
-      results.forEach((result) => console.log(result.status))
-    );
-  };
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          result.value.data.playlists.forEach(playlist => {
+            if (allResults.playlists.has(playlist.playlist_name)) {
+              let existingPlaylist = allResults.playlists.get(playlist.playlist_name);
+              existingPlaylist.tracks = [...existingPlaylist.tracks, ...playlist.tracks];
+            } else {
+              allResults.playlists.set(playlist.playlist_name, playlist);
+            }
+          });
+          allResults.leftover_tracks = [...allResults.leftover_tracks, ...result.value.data.leftover_tracks];
+        } else {
+          console.error(result.reason);
+        }
+      })
+    ).finally(() => {
+      // Transform Map back into array for consistency with original structure
+      allResults.playlists = Array.from(allResults.playlists.values());
+      setPlaylists(allResults.playlists);
+      setLeftoverTracks(allResults.leftover_tracks);
+      console.log(playlists)
+      console.log(leftoverTracks)
+      setLoading(false);
+    });
+
+    
+};
 
   const mergePlaylists = (playlists, sortedTracks) => {
     return playlists.map((playlist) => {
@@ -501,11 +528,27 @@ const PlaylistBox = ({
             variant="contained"
             color="primary"
             style={{ marginBottom: '10px', backgroundColor: '#1DB954' }}
-            onClick={handleClick}
+            onClick={() => handleClick()}
             disabled={playlistIdeas.length === 0 || selectedTracks.length === 0}
           >
             Generate Playlists
           </Button>
+        </Grid>
+      )}
+
+      {loading && playlists.length === 0 && (
+        <Grid
+          container
+          direction="column"
+          justifyContent="center"
+          alignItems="center"
+          style={{ height: '100%' }}
+        >
+          <CircularProgress sx={{ color: '#1DB954' }} />
+            <Typography variant="h6" style={{ marginTop: '20px' }}>
+              Generating Playlists...
+            </Typography>
+            <Typography variant="p">This may take a few minutes</Typography>
         </Grid>
       )}
 
@@ -626,14 +669,8 @@ const OrganizeLikedSongs = () => {
   }, []);
 
   useEffect(() => {
-    if (selectAll) {
-      setSelectedTracks(tracks);
-    }
-  }, [tracks]);
-
-  useEffect(() => {
     selectAll ? setSelectedTracks(tracks) : setSelectedTracks([]);
-  }, [setSelectedTracks, tracks]);
+  }, [selectAll, tracks]);
 
   const handleCheck = useCallback(
     (track) => {
