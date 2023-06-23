@@ -181,6 +181,7 @@ const GeneratePlaylistIdeasBox = ({
         m: '0 auto',
         position: 'relative',
         overflow: 'hidden',
+        marginRight: '20px'
       }}
     >
       <Grid
@@ -203,6 +204,9 @@ const GeneratePlaylistIdeasBox = ({
             overflowY: 'auto',
             width: '100%',
             pt: 2,
+            display: 'flex', // added flex here
+            flexDirection: 'column', // make it a column
+            justifyContent: 'center', // centers items vertically in current line
           }}
         >
           {playlistIdeas.length === 0 && loading && (
@@ -211,7 +215,7 @@ const GeneratePlaylistIdeasBox = ({
               direction="column"
               justifyContent="center"
               alignItems="center"
-              style={{ minHeight: '100%' }}
+              style={{ height: '100vh', marginTop: '160px' }}
             >
               <CircularProgress sx={{ color: '#1DB954' }} />
               <Typography variant="h6" style={{ marginTop: '20px' }}>
@@ -222,16 +226,23 @@ const GeneratePlaylistIdeasBox = ({
           )}
 
           {playlistIdeas.length === 0 && !loading && (
+            // <Grid
+            //   container
+            //   direction="row"
+            //   justifyContent="center"
+            //   alignItems="center"
+            // >
             <Grid
               container
-              direction="row"
+              direction="column"
               justifyContent="center"
               alignItems="center"
+              style={{ height: '100vh', marginTop: '160px' }}
             >
               <Button
                 variant="contained"
                 color="primary"
-                style={{ marginBottom: '10px', backgroundColor: '#1DB954' }}
+                style={{ backgroundColor: '#1DB954' }}
                 onClick={handleGeneratePlaylistNames}
                 disabled={loading}
               >
@@ -739,6 +750,7 @@ const OrganizeLikedSongs = () => {
                 backgroundColor: '#282828',
                 paddingLeft: '15px',
                 borderRadius: '10px',
+                marginRight: '20px',
               }}
             >
               <Box
