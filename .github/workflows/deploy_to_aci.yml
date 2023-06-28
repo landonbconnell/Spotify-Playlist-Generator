@@ -24,7 +24,7 @@ jobs:
         run: docker-compose build
       - name: Push images to Docker Hub
         run: |
-          docker tag spotify-playlist-generator-client:latest landonconnell/spotify-playlist-generator-client:latest
-          docker tag spotify-playlist-generator-server:latest landonconnell/spotify-playlist-generator-server:latest
-          docker push landonconnell/spotify-playlist-generator-client:latest
-          docker push landonconnell/spotify-playlist-generator-server:latest
+          docker tag spotify-playlist-generator_client:latest landonconnell/spotify-playlist-generator_client:latest
+          docker tag spotify-playlist-generator_server:latest landonconnell/spotify-playlist-generator_server:latest
+          docker push landonconnell/spotify-playlist-generator_client:latest
+          docker push landonconnell/spotify-playlist-generator_server:latest
