@@ -1,4 +1,4 @@
-name: CI
+name: Build and Deploy app to Azure
 
 on:
   push:
