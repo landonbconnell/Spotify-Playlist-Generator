@@ -77,7 +77,7 @@ jobs:
 
       - name: Create Azure context
         run: |
-          docker context create aci SPGContext --resource-group SPGResources
+          docker context create aci SPGContext --description "Context for ACI"
           docker context use SPGContext
 
       - name: Deploy application to ACI
