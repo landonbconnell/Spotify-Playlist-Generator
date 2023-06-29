@@ -77,7 +77,7 @@ jobs:
 
       - name: Create Azure context
         run: |
-          docker context create aci SPGContext --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }} --resource-group SPGResources --location eastus
+          docker context create aci SPGContext
           docker context use SPGContext
 
       - name: Deploy application to ACI
