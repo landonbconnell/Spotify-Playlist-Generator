@@ -3,7 +3,6 @@ services:
   client:
     image: landonconnell/spotify-playlist-generator-client:latest
     container_name: spotify-playlist-generator-client
-    environment:
     build:
       context: ./client
     ports:
