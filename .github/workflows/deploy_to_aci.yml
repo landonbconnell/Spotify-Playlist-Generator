@@ -26,6 +26,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install docker-ce docker-ce-cli containerd.io
 
+      - name: Check version of Docker
+        run: docker -v
+
       - name: Checkout code
         uses: actions/checkout@v3
 
