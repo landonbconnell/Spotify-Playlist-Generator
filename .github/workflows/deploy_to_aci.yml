@@ -39,17 +39,17 @@ jobs:
         run: az group create --name SPGResources --location eastus
 
       - name: Create Azure container registry
-        run: az acr create --resource-group SPGResources --name spg-container --sku Basic
+        run: az acr create --resource-group SPGResources --name spgcontainer --sku Basic
 
       - name: Login to Azure container registry
-        run: az acr login --name spg-container
+        run: az acr login --name spgcontainer
 
       - name: Tag and Push images to Azure container registry
         run: |
-          docker tag landonconnell/spotify-playlist-generator-client spg-container.azurecr.io/spotify-playlist-generator-client
-          docker tag landonconnell/spotify-playlist-generator-server spg-container.azurecr.io/spotify-playlist-generator-server
-          docker push spg-container.azurecr.io/spotify-playlist-generator-client
-          docker push spg-container.azurecr.io/spotify-playlist-generator-server
+          docker tag landonconnell/spotify-playlist-generator-client spgcontainer.azurecr.io/spotify-playlist-generator-client
+          docker tag landonconnell/spotify-playlist-generator-server spgcontainer.azurecr.io/spotify-playlist-generator-server
+          docker push spgcontainer.azurecr.io/spotify-playlist-generator-client
+          docker push spgcontainer.azurecr.io/spotify-playlist-generator-server
 
       - name: Create Azure context
         run: |
