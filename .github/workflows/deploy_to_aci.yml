@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checking Docker version
-        run: docker -v
+      - name: Checking Docker Login flags
+        run: docker login --help
 
       - name: Checkout code
         uses: actions/checkout@v3
