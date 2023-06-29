@@ -26,11 +26,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install docker-ce docker-ce-cli containerd.io
 
-      - name: Check version of Docker
-        run: |
-          docker -v
-          docker login azure --help
-
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -73,9 +68,15 @@ jobs:
           docker push spgcontainer.azurecr.io/spotify-playlist-generator-client
           docker push spgcontainer.azurecr.io/spotify-playlist-generator-server
 
+      - name: Login to Azure container registry with Docker
+        uses: azure/docker-login@v1
+        with:
+          login-server: index.docker.io
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
       - name: Create Azure context
         run: |
-          docker login azure
           docker context create aci SPGContext --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }} --resource-group SPGResources --location eastus
           docker context use SPGContext
 
