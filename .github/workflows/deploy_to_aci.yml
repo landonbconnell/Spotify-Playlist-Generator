@@ -28,6 +28,8 @@ jobs:
 
       - name: Debugging context create
         run: |
+          echo "azure --version"
+          run azure --version
           echo "docker context --help"
           docker context --help
           echo "docker context create --help"
@@ -86,7 +88,7 @@ jobs:
 
       - name: Create Azure context
         run: |
-          docker context create aci SPGContext 
+          docker context create SPGContext 
           docker context use SPGContext
 
       - name: Deploy application to ACI
