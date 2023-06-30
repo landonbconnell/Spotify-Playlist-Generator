@@ -28,8 +28,6 @@ jobs:
 
       - name: Debugging context create
         run: |
-          echo "az --version"
-          run az --version
           echo "docker context --help"
           docker context --help
           echo "docker context create --help"
@@ -62,6 +60,11 @@ jobs:
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Debugging Azure
+        run: |
+          echo "az --version"
+          run az --version
 
       - name: Create Azure resource group
         run: az group create --name SPGResources --location eastus
