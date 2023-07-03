@@ -3,7 +3,6 @@ import axios from 'axios';
 import '../styles/HomePage.css';
 import FeatureLink from '../components/FeatureLink';
 import { Link, useLocation } from 'react-router-dom';
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
 const HomePage = () => {
   /* gets the authorization code from the URL*/

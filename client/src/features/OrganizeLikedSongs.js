@@ -19,7 +19,6 @@ import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
 const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 
