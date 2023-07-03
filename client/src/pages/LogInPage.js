@@ -1,4 +1,5 @@
 import React from 'react';
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
 const styles = {
   container: {
@@ -30,9 +31,10 @@ const styles = {
 };
 
 const LogInPage = () => {
+  const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 
   const handleLogin = () => {
-    window.location.href = 'http://localhost:5000/auth/login'
+    window.location.href = `${REACT_APP_API_URL}/auth/login`;
   };
 
   return (

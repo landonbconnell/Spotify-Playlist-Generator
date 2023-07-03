@@ -13,14 +13,17 @@ ENV NODE_ENV=production
 COPY package.json ./
 COPY package-lock.json* ./
 
-# Install Node.js dependencies
-RUN npm install --production
+# Install Node.js dependencies and serve package
+RUN npm install --production && npm install -g serve
 
 # Copy everything else
 COPY . .
 
 # Expose ports
-EXPOSE 3000
+EXPOSE 80
 
-# Run the start script
-CMD npm start
+# Build the app
+RUN npm run build
+
+# Start the production server
+CMD serve -s build -l 80

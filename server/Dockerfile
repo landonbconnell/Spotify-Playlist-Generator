@@ -23,4 +23,4 @@ COPY . .
 EXPOSE 5000
 
 # Run the start script
-CMD npm start
+CMD npm run start-prod

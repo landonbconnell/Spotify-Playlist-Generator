@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import {
   CircularProgress,
@@ -19,6 +19,9 @@ import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
+
+const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 
 // Function to fetch playlist names and descriptions
 const fetchPlaylistNamesAndDescriptions = (
@@ -27,7 +30,7 @@ const fetchPlaylistNamesAndDescriptions = (
   setCurrentId
 ) => {
   return axios
-    .get('http://localhost:5000/playlists/getNamesAndDescriptions')
+    .get(`${REACT_APP_API_URL}/playlists/getNamesAndDescriptions`)
     .then((response) => {
       const playlists = response.data.playlists;
       playlists.forEach((playlist) => {
@@ -150,7 +153,7 @@ const GeneratePlaylistIdeasBox = ({
     setLoading(true);
     axios
       .get(
-        `http://localhost:5000/playlists/getNameAndDescriptionByKeyword/${keywords}`
+        `${REACT_APP_API_URL}/playlists/getNameAndDescriptionByKeyword/${keywords}`
       )
       .then((response) => {
         const newPlaylist = response.data;
@@ -181,7 +184,7 @@ const GeneratePlaylistIdeasBox = ({
         m: '0 auto',
         position: 'relative',
         overflow: 'hidden',
-        marginRight: '20px'
+        marginRight: '20px',
       }}
     >
       <Grid
@@ -394,12 +397,11 @@ const PlaylistBox = ({
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(false);
   const [leftoverTracks, setLeftoverTracks] = useState([]);
-  const [buttonClicked, setButtonClicked] = useState(false);
 
   const handleClick = () => {
     setLoading(true);
 
-    let url = 'http://localhost:5000/playlists/generatePlaylists';
+    let url = `${REACT_APP_API_URL}/playlists/generatePlaylists`;
     let payloads = [];
 
     const tracksPerAPICall = 20;
@@ -415,91 +417,49 @@ const PlaylistBox = ({
       });
     }
 
-    let promises = payloads.map((payload) => axios.post(url, payload))
+    let promises = payloads.map((payload) => axios.post(url, payload));
 
     let allResults = {
       playlists: new Map(),
-      leftover_tracks: []
+      leftover_tracks: [],
     };
 
-    Promise.allSettled(promises).then((results) =>
-      results.forEach((result) => {
-        if (result.status === "fulfilled") {
-          result.value.data.playlists.forEach(playlist => {
-            if (allResults.playlists.has(playlist.playlist_name)) {
-              let existingPlaylist = allResults.playlists.get(playlist.playlist_name);
-              existingPlaylist.tracks = [...existingPlaylist.tracks, ...playlist.tracks];
-            } else {
-              allResults.playlists.set(playlist.playlist_name, playlist);
-            }
-          });
-          allResults.leftover_tracks = [...allResults.leftover_tracks, ...result.value.data.leftover_tracks];
-        } else {
-          console.error(result.reason);
-        }
-      })
-    ).finally(() => {
-      // Transform Map back into array for consistency with original structure
-      allResults.playlists = Array.from(allResults.playlists.values());
-      setPlaylists(allResults.playlists);
-      setLeftoverTracks(allResults.leftover_tracks);
-      console.log(playlists)
-      console.log(leftoverTracks)
-      setLoading(false);
-    });
-
-    
-};
-
-  const mergePlaylists = (playlists, sortedTracks) => {
-    return playlists.map((playlist) => {
-      let sorted = sortedTracks.find(
-        (sortedTrack) => sortedTrack.playlist_name === playlist.playlist_name
-      );
-      if (sorted) {
-        return {
-          ...playlist,
-          tracks: [...playlist.tracks, ...sorted.tracks],
-        };
-      }
-      return playlist;
-    });
+    Promise.allSettled(promises)
+      .then((results) =>
+        results.forEach((result) => {
+          if (result.status === 'fulfilled') {
+            result.value.data.playlists.forEach((playlist) => {
+              if (allResults.playlists.has(playlist.playlist_name)) {
+                let existingPlaylist = allResults.playlists.get(
+                  playlist.playlist_name
+                );
+                existingPlaylist.tracks = [
+                  ...existingPlaylist.tracks,
+                  ...playlist.tracks,
+                ];
+              } else {
+                allResults.playlists.set(playlist.playlist_name, playlist);
+              }
+            });
+            allResults.leftover_tracks = [
+              ...allResults.leftover_tracks,
+              ...result.value.data.leftover_tracks,
+            ];
+          } else {
+            console.error(result.reason);
+          }
+        })
+      )
+      .finally(() => {
+        // Transform Map back into array for consistency with original structure
+        allResults.playlists = Array.from(allResults.playlists.values());
+        setPlaylists(allResults.playlists);
+        setLeftoverTracks(allResults.leftover_tracks);
+        console.log(playlists);
+        console.log(leftoverTracks);
+        setLoading(false);
+      });
   };
-
-  // const handleClick = async () => {
-  //   setLoading(true);
-
-  //   const tracksPerAPICall = 10;
-  //   const numAPICalls = Math.ceil(selectedTracks.length / tracksPerAPICall);
-  //   let i;
-
-  //   for (i = 0; i < numAPICalls; i++) {
-  //     let input = {
-  //       playlists: playlistIdeas,
-  //       tracks: selectedTracks.slice(
-  //         tracksPerAPICall * i,
-  //         tracksPerAPICall * (i + 1)
-  //       ),
-  //     };
-
-  //     await axios
-  //       .post('http://localhost:5000/playlists/generatePlaylists', input)
-  //       .then((response) => {
-  //         let sortedTracks = response.data.playlists;
-  //         if (playlists.length === 0) {
-  //           setPlaylists(sortedTracks);
-  //         } else {
-  //           let updatedPlaylists = mergePlaylists(playlists, sortedTracks);
-  //           setPlaylists(updatedPlaylists);
-  //         }
-
-  //         console.log(playlists);
-  //       })
-  //       .catch((error) => console.log(error));
-  //   }
-
-  //   setLoading(false);
-  // };
 
   return (
     <Box
@@ -556,10 +516,10 @@ const PlaylistBox = ({
           style={{ height: '100%' }}
         >
           <CircularProgress sx={{ color: '#1DB954' }} />
-            <Typography variant="h6" style={{ marginTop: '20px' }}>
-              Generating Playlists...
-            </Typography>
-            <Typography variant="p">This may take a few minutes</Typography>
+          <Typography variant="h6" style={{ marginTop: '20px' }}>
+            Generating Playlists...
+          </Typography>
+          <Typography variant="p">This may take a few minutes</Typography>
         </Grid>
       )}
 
@@ -668,7 +628,7 @@ const OrganizeLikedSongs = () => {
   // Fetch tracks function
   useEffect(() => {
     axios
-      .get('http://localhost:5000/tracks/saved')
+      .get(`${REACT_APP_API_URL}/tracks/saved`)
       .then((response) => {
         setTracks(response.data);
         setLoading(false);
@@ -710,13 +670,6 @@ const OrganizeLikedSongs = () => {
     },
     [playlistIdeas]
   );
-
-  const handleGeneratePlaylistNames = useCallback(() => {
-    setLoading(true);
-    fetchPlaylistNamesAndDescriptions(setPlaylistIdeas).finally(() =>
-      setLoading(false)
-    );
-  }, []);
 
   return (
     <Box

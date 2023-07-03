@@ -9,32 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Update Docker
-        run: |
-          sudo apt-get remove docker docker-engine docker.io containerd runc
-          sudo apt-get update
-          sudo apt-get install \
-              apt-transport-https \
-              ca-certificates \
-              curl \
-              gnupg \
-              lsb-release
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-          echo \
-            "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
-            $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-          sudo apt-get update
-          sudo apt-get install docker-ce docker-ce-cli containerd.io
-
-      - name: Debugging context create
-        run: |
-          echo "docker context --help"
-          docker context --help
-          echo "docker context create --help"
-          docker context create --help
-          echo "docker context create aci --help"
-          docker context create aci --help
-
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -47,6 +21,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -56,44 +35,27 @@ jobs:
       - name: Push images to Docker Hub
         run: docker-compose push
 
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Debugging Azure
-        run: |
-          echo "az --version"
-          run az --version
-
       - name: Create Azure resource group
         run: az group create --name SPGResources --location eastus
 
-      - name: Create Azure container registry
-        run: az acr create --resource-group SPGResources --name spgcontainer --sku Basic
-
-      - name: Login to Azure container registry
-        run: az acr login --name spgcontainer
-
-      - name: Tag and Push images to Azure container registry
+      - name: Deploy client to ACI
         run: |
-          docker tag landonconnell/spotify-playlist-generator-client spgcontainer.azurecr.io/spotify-playlist-generator-client
-          docker tag landonconnell/spotify-playlist-generator-server spgcontainer.azurecr.io/spotify-playlist-generator-server
-          docker push spgcontainer.azurecr.io/spotify-playlist-generator-client
-          docker push spgcontainer.azurecr.io/spotify-playlist-generator-server
+          az container create \
+          --resource-group SPGResources \
+          --name spg-client-container \
+          --image docker.io/landonconnell/spotify-playlist-generator-client \
+          --ports 80 \
+          --dns-name-label spotify-playlist-generator \
+          --location eastus
 
-      - name: Login to Azure container registry with Docker
-        uses: azure/docker-login@v1
-        with:
-          login-server: index.docker.io
-          username: ${{ secrets.AZURE_CLIENT_ID }}
-          password: ${{ secrets.AZURE_CLIENT_SECRET }}
-
-      - name: Create Azure context
+      - name: Deploy server to ACI
         run: |
-          docker context create SPGContext 
-          docker context use SPGContext
+          az container create \
+          --resource-group SPGResources \
+          --name spg-server-container \
+          --image docker.io/landonconnell/spotify-playlist-generator-server \
+          --ports 5000 \
+          --dns-name-label spotify-playlist-generator-server \
+          --location eastus
 
-      - name: Deploy application to ACI
-        run: docker-compose up
-# --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }}  --resource-group SPGResources --location eastus
+# docker tag spotify-playlist-generator-client landonconnell/spotify-playlist-generator-client && docker push landonconnell/spotify-playlist-generator-client

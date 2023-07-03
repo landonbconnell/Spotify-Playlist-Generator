@@ -3,17 +3,19 @@ import axios from 'axios';
 import '../styles/HomePage.css';
 import FeatureLink from '../components/FeatureLink';
 import { Link, useLocation } from 'react-router-dom';
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
 const HomePage = () => {
   /* gets the authorization code from the URL*/
   const query = new URLSearchParams(useLocation().search);
   const code = query.get('code');
+  const REACT_APP_API_URL = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     const source = axios.CancelToken.source();
     if (code) {
       axios
-        .get(`http://localhost:5000/auth/getAccessToken/${code}`, {
+        .get(`${REACT_APP_API_URL}/auth/getAccessToken/${code}`, {
           cancelToken: source.token,
         })
         .then(() => console.log('success'))

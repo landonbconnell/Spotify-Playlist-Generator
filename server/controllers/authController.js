@@ -1,11 +1,12 @@
 const querystring = require('querystring');
 const axios = require('axios');
 const config = require('../config');
+require('dotenv').config({ path: `.env.${process.env.NODE_ENV}` });
 
 // Your application's client ID and redirect URI
 const client_id = 'be4c953fbc71461a85c3dbe065a32fb4';
 const client_secret = 'd5160ab0275046aebc84e959d596ac64';
-const redirect_uri = 'http://localhost:80/home';
+const redirect_uri = process.env.REDIRECT_URI;
 const scope = 'user-library-read'; // Modify the scopes as needed
 
 const authRequest = (req, res) => {
