@@ -1,4 +1,4 @@
-name: Build and Deploy app to Azure Container Instances
+name: Build / Deploy app to Azure Container Instances
 
 on:
   push:
